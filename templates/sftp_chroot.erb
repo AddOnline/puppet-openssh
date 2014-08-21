@@ -1,0 +1,9 @@
+<% if @type == 'group' %>
+Match Group <%= @login %>
+<% else %>
+Match User <%= @login %>
+<% end -%>
+  ChrootDirectory <%= @chroot_directory %>
+  AllowTCPForwarding <% if @bool_allow_tcp_forwarding %>yes<% else %>no<% end %>
+  X11Forwarding <% if @bool_x11_forwarding %>yes<% else %>no<% end %>
+  ForceCommand <%= @command %>
