@@ -2,8 +2,13 @@
 #
 # This is the main openssh class
 #
-#
 # == Parameters
+#
+# Specific parameters
+#
+# [*use_concat*]
+#   Set to true if you want to use concat instead of standard file type.
+#   This is mandatory if you planned to use openssh::sftp_chroot.
 #
 # Standard class parameters
 # Define the general class behaviour and customizations
@@ -199,6 +204,7 @@
 #   Alessandro Franceschi <al@lab42.it/>
 #
 class openssh (
+  $use_concat          = params_lookup( 'use_concat' ),
   $my_class            = params_lookup( 'my_class' ),
   $source              = params_lookup( 'source' ),
   $source_dir          = params_lookup( 'source_dir' ),
@@ -251,6 +257,7 @@ class openssh (
   $bool_firewall=any2bool($firewall)
   $bool_debug=any2bool($debug)
   $bool_audit_only=any2bool($audit_only)
+  $bool_use_concat=any2bool($use_concat)
 
   ### Definition of some variables used in the module
   $manage_package = $openssh::bool_absent ? {
@@ -344,18 +351,36 @@ class openssh (
     require    => $require_package,
   }
 
-  file { 'openssh.conf':
-    ensure  => $openssh::manage_file,
-    path    => $openssh::config_file,
-    mode    => $openssh::config_file_mode,
-    owner   => $openssh::config_file_owner,
-    group   => $openssh::config_file_group,
-    require => $require_package,
-    notify  => $openssh::manage_service_autorestart,
-    source  => $openssh::manage_file_source,
-    content => $openssh::manage_file_content,
-    replace => $openssh::manage_file_replace,
-    audit   => $openssh::manage_audit,
+  if $bool_use_concat {
+    include concat::setup
+    concat{$openssh::config_file:
+      owner   => $openssh::config_file_owner,
+      group   => $openssh::config_file_group,
+      mode    => $openssh::config_file_mode,
+      require => $require_package,
+      notify  => $openssh::manage_service_autorestart,
+      audit   => $openssh::manage_audit,
+    }
+    concat::fragment { 'openssh.conf-header':
+      target  => $openssh::config_file,
+      content => $openssh::manage_file_content,
+      source  => $openssh::manage_file_source,
+      order   => 1,
+    }
+  } else {
+    file { 'openssh.conf':
+      ensure  => $openssh::manage_file,
+      path    => $openssh::config_file,
+      mode    => $openssh::config_file_mode,
+      owner   => $openssh::config_file_owner,
+      group   => $openssh::config_file_group,
+      require => $require_package,
+      notify  => $openssh::manage_service_autorestart,
+      source  => $openssh::manage_file_source,
+      content => $openssh::manage_file_content,
+      replace => $openssh::manage_file_replace,
+      audit   => $openssh::manage_audit,
+    }
   }
 
   # The whole openssh configuration directory can be recursively overriden

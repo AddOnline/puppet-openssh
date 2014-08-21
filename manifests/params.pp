@@ -96,6 +96,7 @@ class openssh::params {
   }
 
   $exchange_hostkeys = false
+  $use_concat = false
 
   $port = '22'
   $protocol = 'tcp'
