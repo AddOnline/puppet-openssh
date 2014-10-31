@@ -45,11 +45,40 @@ For detailed info about the logic and usage patterns of Example42 modules read R
         }
 
 
-## USAGE - Overrides and Customizations
-* Use custom sources for main config file 
+## USAGE - Create a SFTP account
+In order to manage SFTP account the sshd\_config config file should be manage with concat. You have to enable like this :
 
         class { "openssh":
-          source => [ "puppet:///modules/lab42/openssh/openssh.conf-${hostname}" , "puppet:///modules/lab42/openssh/openssh.conf" ], 
+          source     => 'puppet:///modules/lab42/openssh/openssh.conf',
+          use_concat => true,
+        }
+
+Now you can use the _openssh::sftp_chroot_ directive. The only mandatory option is _chroot\_directory_. Here we create a sftp account for user _user42_ chrooted in _/home/user42_ with _password42_ as password.
+
+        # Compute password.
+        $password_salt = 'SecuSalt'
+        $user42_passwd = mkpasswd('password42', $password_salt)
+
+        # Describe SFTP user
+        user { 'user42':
+          password => $user42_passwd,
+        }
+        openssh::sftpd_chroot { 'user42':
+          chroot_directory => '/home/user42',
+        }
+
+Additionnal option are :
+
+* __type__ : Default value is 'user' if you want to enable sftp chroot based on group set this to 'group'
+* __allow\_tcp\_forwarding__ : Set to true to allow X11Forwarding (default : false)
+* __command__ : SFTP command. (defautl : internal-sftp).
+
+
+## USAGE - Overrides and Customizations
+* Use custom sources for main config file
+
+        class { "openssh":
+          source => [ "puppet:///modules/lab42/openssh/openssh.conf-${hostname}" , "puppet:///modules/lab42/openssh/openssh.conf" ],
         }
 
 
@@ -60,10 +89,10 @@ For detailed info about the logic and usage patterns of Example42 modules read R
           source_dir_purge => false, # Set to true to purge any existing file not present in $source_dir
         }
 
-* Use custom template for main config file 
+* Use custom template for main config file
 
         class { "openssh":
-          template => "example42/openssh/openssh.conf.erb",      
+          template => "example42/openssh/openssh.conf.erb",
         }
 
 * To manipulate options in your config using the options array you should use this syntax in your config
@@ -75,7 +104,7 @@ For detailed info about the logic and usage patterns of Example42 modules read R
   need to add parameters to the openssh class
 
         class { "openssh":
-          template => "example42/openssh/openssh.conf.erb",    
+          template => "example42/openssh/openssh.conf.erb",
           options  => {
             'LogLevel'      => 'INFO',
             'UsePAM'        => 'yes',
@@ -88,7 +117,7 @@ For detailed info about the logic and usage patterns of Example42 modules read R
         class { "openssh:"
           my_class => 'openssh::example42',
         }
-  
+
 == USAGE - Manage a user SSH keys:
 * Use all defaults and place in the user's home directory ssh keys that are
   stored centrally on the puppet server.
@@ -96,20 +125,20 @@ For detailed info about the logic and usage patterns of Example42 modules read R
         openssh::key { 'username': }
 
 
-## USAGE - Example42 extensions management 
+## USAGE - Example42 extensions management
 * Activate puppi (recommended, but disabled by default)
   Note that this option requires the usage of Example42 puppi module
 
-        class { "openssh": 
+        class { "openssh":
           puppi    => true,
         }
 
 * Activate puppi and use a custom puppi_helper template (to be provided separately with
-  a puppi::helper define ) to customize the output of puppi commands 
+  a puppi::helper define ) to customize the output of puppi commands
 
         class { "openssh":
           puppi        => true,
-          puppi_helper => "myhelper", 
+          puppi_helper => "myhelper",
         }
 
 * Activate automatic monitoring (recommended, but disabled by default)
@@ -120,10 +149,10 @@ For detailed info about the logic and usage patterns of Example42 modules read R
           monitor_tool => [ "nagios" , "monit" , "munin" ],
         }
 
-* Activate automatic firewalling 
+* Activate automatic firewalling
   This option requires the usage of Example42 firewall and relevant firewall tools modules
 
-        class { "openssh":       
+        class { "openssh":
           firewall      => true,
           firewall_tool => "iptables",
           firewall_src  => "10.42.0.0/24",
