@@ -18,11 +18,11 @@ define openssh::sftp_chroot(
   $bool_allow_tcp_forwarding = any2bool($allow_tcp_forwarding)
   $bool_x11_forwarding = any2bool($x11_forwarding)
 
-  $manage_ensure_present_or_absent = $ensure ? {
+  $manage_ensure_present_or_absent = $ensure ? {
     'absent' => 'absent',
     default  => 'present',
   }
-  $manage_ensure_directory_or_absent = $ensure ? {
+  $manage_ensure_directory_or_absent = $ensure ? {
     'absent' => 'absent',
     default  => 'directory',
   }
